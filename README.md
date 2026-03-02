@@ -4,7 +4,7 @@
 
 ---
 
-## Overview
+### Overview
 
 Modern engineering teams lose context as projects grow.
 
@@ -22,7 +22,7 @@ It explores how raw repository activity can be transformed into structured proje
 
 ---
 
-## What This Version Does
+### What This Version Does
 
 CodeFabric Lite connects to a GitHub repository and provides:
 
@@ -45,7 +45,7 @@ The timeline view helps surface how a project evolved over time, making decision
 
 ---
 
-## How to Run
+### How to Run
 
 1. Install dependencies:
 pip install fastapi uvicorn requests
@@ -57,7 +57,7 @@ uvicorn backend:app --reload
 
 ---
 
-## Vision
+### Vision
 
 The broader goal is to build an intelligence layer on top of engineering workflows that:
 
@@ -70,7 +70,7 @@ This project represents the foundational step toward a more comprehensive engine
 
 ---
 
-## Author
+### Authors
 
-Delwin Benson
-Mrinank
+- Delwin Benson
+- Mrinank
