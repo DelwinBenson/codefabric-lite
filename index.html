@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CodeFabric Lite</title>
+  <style>
+    body {
+      font-family: Arial;
+      margin: 0;
+      background: #020617;
+      color: white;
+    }
+
+    /* ⭐ Hero Section */
+    .hero {
+      text-align: center;
+      padding: 80px 20px 40px;
+      background: radial-gradient(circle at top, #1e293b, #020617);
+    }
+
+    h1 {
+      font-size: 64px;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg,#38bdf8,#a78bfa);
+      -webkit-background-clip: text;
+      color: transparent;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    .tagline {
+      font-size: 20px;
+      color: #cbd5e1;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background: #020617;
+      padding: 40px;
+      border-radius: 16px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 0 40px rgba(56,189,248,0.2);
+      border: 1px solid #1e293b;
+    }
+
+    input {
+      padding: 14px;
+      width: 100%;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 20px;
+      font-size: 16px;
+      background: #0f172a;
+      color: white;
+    }
+
+    button {
+      padding: 14px 28px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(90deg,#38bdf8,#a78bfa);
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    pre {
+      background: #0f172a;
+      padding: 20px;
+      overflow-x: auto;
+      border-radius: 8px;
+      color: #e2e8f0;
+    }
+
+    h2 {
+      margin-top: 30px;
+      color: #a5b4fc;
+    }
+
+    #results {
+      margin: 40px auto;
+      max-width: 1000px;
+      padding: 0 20px;
+    }
+
+    /* ⭐ Timeline container */
+    #timeline-container {
+      position: relative;
+      margin-top: 40px;
+      height: 160px;
+    }
+
+    /* ⭐ Timeline line */
+    #timeline-line {
+      position: absolute;
+      top: 90px;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: #d32f2f;
+      border-radius: 3px;
+    }
+
+    /* ⭐ Marker circle */
+    .marker {
+      position: absolute;
+      top: 82px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      transform: translateX(-50%);
+      transition: transform 0.2s ease;
+      cursor: pointer;
+    }
+
+    .marker:hover {
+      transform: translateX(-50%) scale(1.4);
+    }
+
+    .commit {
+      background: #4CAF50;
+    }
+
+    .decision {
+      background: #ff5722;
+    }
+
+    /* ⭐ Tooltip (hover card) */
+    .tooltip {
+      position: absolute;
+      background: #0f172a;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      border: 1px solid #1e293b;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      pointer-events: none;
+      transform: translate(-50%, -120%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      z-index: 100;
+      min-width: 220px;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <div class="hero">
+    <h1>CodeFabric</h1>
+    <p class="tagline">Project Evolution & Decision Intelligence Platform</p>
+
+    <div class="card">
+      <input id="repoUrl" placeholder="Enter GitHub repo URL" />
+      <button onclick="analyze()">Analyze Repository</button>
+    </div>
+  </div>
+
+  <div id="results"></div>
+
+<script>
+async function analyze() {
+  const url = document.getElementById("repoUrl").value;
+  const resultsDiv = document.getElementById("results");
+  resultsDiv.innerHTML = "Analyzing...";
+
+  const response = await fetch(
+    `http://127.0.0.1:8000/analyze?repo_url=${url}`
+  );
+
+  const data = await response.json();
+
+  if (data.error) {
+    resultsDiv.innerHTML = "<p style='color:red'>" + data.error + "</p>";
+    return;
+  }
+
+  resultsDiv.innerHTML = `
+    <h2>Project Info</h2>
+    <pre>
+Name: ${data.project}
+Description: ${data.description}
+    </pre>
+
+    <h2>Recent Commits</h2>
+    <pre>${JSON.stringify(data.commits, null, 2)}</pre>
+
+    <h2>Pull Requests</h2>
+    <pre>${JSON.stringify(data.pull_requests, null, 2)}</pre>
+
+    <h2>Issues</h2>
+    <pre>${JSON.stringify(data.issues, null, 2)}</pre>
+
+    <h2>Decision Summary</h2>
+    <pre>${JSON.stringify(data.decision_summary, null, 2)}</pre>
+
+    <h2>Decision Timeline</h2>
+    <div id="timeline-container">
+      <div id="timeline-line"></div>
+    </div>
+  `;
+
+  const container = document.getElementById("timeline-container");
+  const timeline = data.decision_timeline || [];
+  const decisions = data.decision_summary || [];
+
+  const total = timeline.length;
+
+  timeline.forEach((event, index) => {
+
+    const position = (index / total) * 100;
+
+    const isDecision = decisions.some(d =>
+      event.event.toLowerCase().includes(d.toLowerCase())
+    );
+
+    const marker = document.createElement("div");
+    marker.className = "marker " + (isDecision ? "decision" : "commit");
+    marker.style.left = position + "%";
+
+    const tooltip = document.createElement("div");
+    tooltip.className = "tooltip";
+    tooltip.innerHTML = `
+      <strong>${event.event}</strong><br>
+      ${event.author}<br>
+      ${event.date || "Unknown date"}
+    `;
+
+    container.appendChild(marker);
+    container.appendChild(tooltip);
+
+    marker.addEventListener("mouseenter", () => {
+      tooltip.style.left = position + "%";
+      tooltip.style.top = "82px";
+      tooltip.style.opacity = "1";
+    });
+
+    marker.addEventListener("mouseleave", () => {
+      tooltip.style.opacity = "0";
+    });
+
+  });
+}
+</script>
+
+</body>
+</html>
